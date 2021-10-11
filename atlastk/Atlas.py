@@ -105,6 +105,7 @@ def worker(userCallback,dom,callbacks):
 		userObject = userCallback(*args)
 	
 	while True:
+		time.sleep(1) #  This should trigger the deadlock between worker() thread and main tread (funtion _serve).
 		[action,id] = dom.getAction()
 
 		if dom.isQuitting():

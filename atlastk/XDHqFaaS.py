@@ -269,9 +269,10 @@ def _serve(callback,userCallback,callbacks ):
 			getString()	# Language. Not handled yet.
 		else:
 			_instances[id].signal()
-
+			print('_serve just called .signal() and starts waiting. Was this too early for getAction() ?')
 			with _globalCondition:
 				_globalCondition.wait()
+			print('_serve just finished waiting. This print should not happen because of the deadlock.')
 
 def launch(callback, userCallback,callbacks,headContent):
 	global _headContent, _instances
@@ -326,8 +327,10 @@ class DOM_FaaS:
 			self._firstLaunch = False
 		else:
 			self._sendSpecialAction("#StandBy_1")
-
+		
+		print('getAction() starts waiting')
 		self.wait()
+		print('getAction() finished waiting. This print should not happen because of the deadlock.')
 
 		[id,action]=["",""] if self.instance.quit else [getString(),getString()]
 
