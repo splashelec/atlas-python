@@ -74,7 +74,7 @@ _MAIN_PROTOCOL_LABEL = "bf077e9f-baca-48a1-bd3f-bf5181a78666"
 _MAIN_PROTOCOL_VERSION = "0"
 
 _writeLock = threading.Lock()
-_globalCondition = threading.Condition()
+_global_readyForProcessingBy_serve = threading.Event()
 
 _url = ""
 
@@ -227,7 +227,7 @@ def _ignition():
 		_supply(_url)
 
 def _serve(callback,userCallback,callbacks ):
-	global _writeLock, _globalCondition
+	global _writeLock, _global_readyForProcessingBy_serve
 	while True:
 		id = readSInt()
 		
@@ -254,8 +254,8 @@ def _serve(callback,userCallback,callbacks ):
 				sys.exit("Instance of id '" + str(id) + "' not available for destruction!")
 			_instances[id].quit = True
 			_instances[id].signal();
-			with _globalCondition:
-				_globalCondition.wait()
+			_global_readyForProcessingBy_serve.wait()
+			_global_readyForProcessingBy_serve.clear()
 			del _instances[id]	# Seemingly destroy the object and remove the entry too.
 		elif not id in _instances:
 			sys.exit("Unknown instance of id '" + str(id) + "'!")
@@ -269,8 +269,8 @@ def _serve(callback,userCallback,callbacks ):
 		else:
 			_instances[id].signal()
 
-			with _globalCondition:
-				_globalCondition.wait()
+			_global_readyForProcessingBy_serve.wait()
+			_global_readyForProcessingBy_serve.clear()
 
 def launch(callback, userCallback,callbacks,headContent):
 	global _headContent, _instances
@@ -311,8 +311,7 @@ class DOM_FaaS:
 		self.instance.wait()
 		
 	def signal(self):
-		with _globalCondition:
-			_globalCondition.notify()
+		_global_readyForProcessingBy_serve.set()
 
 	def _sendSpecialAction(self, action):
 		_writeLock.acquire()
